@@ -1,4 +1,5 @@
 from time import time
+
 import numpy as np
 from mpi4py import MPI
 
@@ -19,9 +20,9 @@ class Bucket:
         return q
 
     def cut(self, quantile_list):
-        c = np.digitize(self.buff,quantile_list)
-        e = [[] for _ in range (len(quantile_list) + 1)]
-        for i in range (len(self.buff)):
+        c = np.digitize(self.buff, quantile_list)
+        e = [[] for _ in range(len(quantile_list) + 1)]
+        for i in range(len(self.buff)):
             e[c[i]].append(self.buff[i])
         return e
 
@@ -42,9 +43,11 @@ def all_equal(a, b):
             return False
     return True
 
-def make_data (rank):
+
+def make_data(nproc, rank, length):
+    length -= length % nproc
     if rank == 0:
-        raw_data = init_random_list(LENGTH)
+        raw_data = init_random_list(length)
         data = np.reshape(raw_data, (nb_p, (int)(LENGTH / nb_p)))
     else:
         data = None
@@ -61,33 +64,34 @@ if __name__ == "__main__":
     nb_p = comm.Get_size()
     rank = comm.Get_rank()
 
-    if rank == root :
-        deb = time(); np.sort(np.random.rand(LENGTH)); fin = time()
-        print(f"Temps d'execution numpy sort : {fin-deb}")
+    # if rank == root :
+    #     deb = time(); np.sort(np.random.rand(LENGTH)); fin = time()
+    #     np_sort = fin-deb
 
     MPI.COMM_WORLD.barrier()
 
-    if LENGTH % nb_p != 0 or nb_p <= 1:
-        raise ("parallel processing is not supported or not needed")
+    data = make_data(nb_p,rank,LENGTH)
+    b = Bucket(comm.scatter(data, root))
 
-    else:
-        data = make_data(rank)
-        b = Bucket(comm.scatter(data, root))
+    if rank == 0:
+        deb = time()
 
-        if rank == 0 :deb = time()
+    b.sort()
 
-        b.sort()
+    split_points = b.quantiles(nb_p)
+    macro_splits = Bucket(np.array(comm.allgather(split_points)).flatten())
+    real_splits = macro_splits.quantiles(nb_p)
 
-        split_points = b.quantiles(nb_p)
-        macro_splits = Bucket(np.array(comm.allgather(split_points)).flatten())
-        real_splits = macro_splits.quantiles(nb_p)
+    data_to_send = b.cut(real_splits)
+    receive_bucket = inhomogenous_flatten(comm.alltoall(data_to_send))
+    receive_bucket = np.sort(receive_bucket)
 
-        data_to_send = b.cut(real_splits)
-        receive_bucket = inhomogenous_flatten(comm.alltoall(data_to_send))
-        receive_bucket = np.sort(receive_bucket)
+    MPI.COMM_WORLD.barrier()
 
+    if rank == 0:
+        fin = time()
+        print(f"{nb_p},{fin-deb}")
 
-        final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
-        if rank == 0:
-            fin = time()
-            print(f"Temps d'execution du bucket sort : {fin-deb}")
+        # final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
+
+    # execute with : mpiexec -np 2 python bucket.py
