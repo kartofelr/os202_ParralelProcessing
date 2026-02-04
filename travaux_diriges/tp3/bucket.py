@@ -1,3 +1,4 @@
+from time import time
 import numpy as np
 from mpi4py import MPI
 
@@ -41,8 +42,21 @@ def all_equal(a, b):
             return False
     return True
 
+def make_data (rank):
+    if rank == 0:
+        raw_data = init_random_list(LENGTH)
+        data = np.reshape(raw_data, (nb_p, (int)(LENGTH / nb_p)))
+    else:
+        data = None
+    return data
+
 
 if __name__ == "__main__":
+
+    LENGTH = 1048576  # 2^20 -- for a 2^i  (i < 20) number of processes
+    deb = time(); np.sort(np.random.rand(LENGTH)); fin = time()
+    print(f"Temps d'execution du bucket sort : {fin-deb}")
+
 
     root = 0
 
@@ -50,19 +64,15 @@ if __name__ == "__main__":
     nb_p = comm.Get_size()
     rank = comm.Get_rank()
 
-    LENGTH = 1048576  # 2^20 -- for a 2^i  (i < 20) number of processes
     if LENGTH % nb_p != 0 or nb_p <= 1:
         raise ("parallel processing is not supported or not needed")
 
     else:
-        if rank == 0:
-            raw_data = init_random_list(LENGTH)
-            sorted_data = np.sort(raw_data)
-            data = np.reshape(raw_data, (nb_p, (int)(LENGTH / nb_p)))
-        else:
-            data = None
-
+        data = make_data(rank)
         b = Bucket(comm.scatter(data, root))
+
+        if rank == 0 :deb = time()
+
         b.sort()
 
         split_points = b.quantiles(nb_p)
@@ -73,11 +83,8 @@ if __name__ == "__main__":
         receive_bucket = inhomogenous_flatten(comm.alltoall(data_to_send))
         receive_bucket = np.sort(receive_bucket)
 
+
         final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
-
         if rank == 0:
-            edges = [0.0] + list(real_splits) + [1.0]
-            counts, _ = np.histogram(raw_data, bins=edges)
-            print(f"the distribution of bucket sizes is {counts}")
-
-            print(f"did it work ? : {all_equal(sorted_data,final_result)}")
+            fin = time()
+            print(f"Temps d'execution du bucket sort : {fin-deb}")
