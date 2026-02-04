@@ -85,12 +85,20 @@ if __name__ == "__main__":
 
     MPI.COMM_WORLD.barrier()
 
-    affinity = os.sched_getaffinity(0)
-    print(f"Rank {rank} is pinned to Core(s): {list(affinity)}")
 
     if rank == 0:
         fin = time()
         print(f"{nb_p},{fin-deb}")
+
+
+    MPI.COMM_WORLD.barrier()
+    affinity = os.sched_getaffinity(0)
+
+    cores = comm.gather(affinity, root)
+    MPI.COMM_WORLD.barrier()
+    if rank == 0:
+        print(cores)
+
 
         # final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
 
