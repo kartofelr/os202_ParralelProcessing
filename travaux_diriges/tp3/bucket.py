@@ -54,15 +54,18 @@ def make_data (rank):
 if __name__ == "__main__":
 
     LENGTH = 1048576  # 2^20 -- for a 2^i  (i < 20) number of processes
-    deb = time(); np.sort(np.random.rand(LENGTH)); fin = time()
-    print(f"Temps d'execution du bucket sort : {fin-deb}")
-
 
     root = 0
 
     comm = MPI.COMM_WORLD
     nb_p = comm.Get_size()
     rank = comm.Get_rank()
+
+    if rank == root :
+        deb = time(); np.sort(np.random.rand(LENGTH)); fin = time()
+        print(f"Temps d'execution numpy sort : {fin-deb}")
+
+    MPI.COMM_WORLD.barrier()
 
     if LENGTH % nb_p != 0 or nb_p <= 1:
         raise ("parallel processing is not supported or not needed")
