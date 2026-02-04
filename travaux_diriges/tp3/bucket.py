@@ -22,10 +22,7 @@ class Bucket:
 
     def cut(self, quantile_list):
         c = np.digitize(self.buff, quantile_list)
-        e = [[] for _ in range(len(quantile_list) + 1)]
-        for i in range(len(self.buff)):
-            e[c[i]].append(self.buff[i])
-        return e
+        return [self.buff[c == i] for i in range(len(quantile_list) + 1)]
 
 
 def init_random_list(n_elem):
@@ -33,9 +30,9 @@ def init_random_list(n_elem):
 
 
 def inhomogenous_flatten(L):
-    if L == None:
+    if L == None or len(L) == 0:
         return L
-    return [item for sublist in L for item in sublist]
+    return np.concatenate(L)
 
 
 def all_equal(a, b):
@@ -57,7 +54,7 @@ def make_data(nproc, rank, length):
 
 if __name__ == "__main__":
 
-    LENGTH = 1048576  # 2^20 -- for a 2^i  (i < 20) number of processes
+    LENGTH = 10**8
 
     root = 0
 
@@ -73,7 +70,7 @@ if __name__ == "__main__":
     if rank == 0:
         deb = time()
 
-    b.sort()
+    #b.sort()
 
     split_points = b.quantiles(nb_p)
     macro_splits = Bucket(np.array(comm.allgather(split_points)).flatten())
@@ -93,6 +90,10 @@ if __name__ == "__main__":
 
     if rank == 0:
         print(nb_p, exec_time, cores)
+        begin = time() 
+        np.random.rand(LENGTH).sort()
+        end = time()
+        # print(f"Single processor sort time: {end - begin} seconds")
 
         # final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
 

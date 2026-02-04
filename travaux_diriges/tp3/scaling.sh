@@ -1,4 +1,4 @@
-echo "cores,time" > results.csv
+echo "cores,time,used_cores" > results.csv
 for p in {1..16}
 do
     echo "working with $p processors"
