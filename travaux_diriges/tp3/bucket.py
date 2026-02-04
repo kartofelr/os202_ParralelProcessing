@@ -1,8 +1,8 @@
+import os
 from time import time
 
 import numpy as np
 from mpi4py import MPI
-import os
 
 
 class Bucket:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     MPI.COMM_WORLD.barrier()
 
-    data = make_data(nb_p,rank,LENGTH)
+    data = make_data(nb_p, rank, LENGTH)
     b = Bucket(comm.scatter(data, root))
 
     if rank == 0:
@@ -83,22 +83,16 @@ if __name__ == "__main__":
     receive_bucket = inhomogenous_flatten(comm.alltoall(data_to_send))
     receive_bucket = np.sort(receive_bucket)
 
-    MPI.COMM_WORLD.barrier()
-
+    MPI.COMM_WORLD.barrier() #the program has only finished once everyone is done
 
     if rank == 0:
-        fin = time()
-        print(f"{nb_p},{fin-deb}")
+        exec_time = time() - deb
 
-
-    MPI.COMM_WORLD.barrier()
     affinity = os.sched_getaffinity(0)
-
     cores = comm.gather(affinity, root)
-    MPI.COMM_WORLD.barrier()
-    if rank == 0:
-        print(cores)
 
+    if rank == 0:
+        print(nb_p, exec_time, cores)
 
         # final_result = inhomogenous_flatten(comm.gather(receive_bucket, root))
 
