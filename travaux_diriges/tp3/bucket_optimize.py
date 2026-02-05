@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     LENGTH -= LENGTH % nb_p
 
-    # 1. Distribute Data
+    # 0. Distribute Data
     if rank == root:
         raw_data = np.random.rand(LENGTH).astype(np.float64)
         data_to_scatter = np.split(raw_data, nb_p)
@@ -37,18 +37,20 @@ if __name__ == "__main__":
     comm.Barrier()
     if rank == root: deb = time()
     if nb_p > 1:
-        # 2. Determine Global Splits (Optimized Allgather)
+        # 1. Trouver les quantiles de son bucket
         local_splits = b.quantiles(nb_p).astype(np.float64)
         all_splits = np.empty(nb_p * (nb_p - 1), dtype=np.float64)
+        # 2. Partager les quantiles avec les autres
         comm.Allgather(local_splits, all_splits) 
         
+        # 3. Calculer les macro-quantiles globaux
         macro_splits = Bucket(all_splits)
         real_splits = macro_splits.quantiles(nb_p)
 
-        # 3. Partition Data
+        # 4. Decouper son bucket selon ces limites
         data_to_send = b.cut(real_splits)
 
-        # 4. Global Redistribute (High-Performance Alltoallv)
+        # 5. Partager les Decoupes
         # Calculate how much we are sending to each rank
         send_counts = np.array([len(part) for part in data_to_send], dtype=np.int32)
         recv_counts = np.zeros(nb_p, dtype=np.int32)
@@ -72,7 +74,7 @@ if __name__ == "__main__":
     
     else : receive_buffer = b.buff
 
-    # 5. Local Sort
+    # 6. Trier les donnes recues localement
     receive_buffer.sort()
 
     comm.Barrier()
@@ -80,7 +82,7 @@ if __name__ == "__main__":
         exec_time = time() - deb
         print(f"{nb_p},{exec_time:.4f}")
         
-        # Validation compare
-        begin = time() 
-        np.sort(np.random.rand(LENGTH))
-        print(f"Single Processor: {time() - begin:.4f}s")
+        # # Validation compare
+        # begin = time() 
+        # np.sort(np.random.rand(LENGTH))
+        # print(f"Single Processor: {time() - begin:.4f}s")
