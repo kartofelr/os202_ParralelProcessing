@@ -31,6 +31,14 @@ Il est a noter que la documentation de `numpy` a ete utilisee exhaustivement, ma
 
 Mon ordinateur ne contient que deux cores, et les machines de l'ensta ne nous donnent pas acces a une multitude d'informations que je voulais, commencant par la topologie de celle-ci.
 
+```
+henry.royer@info1-new:~$ apt install sudo
+E: Impossible d'ouvrir le fichier verrou /var/lib/dpkg/lock-frontend - open (13: Permission non accordée)
+E: Impossible d'obtenir le verrou de dpkg (/var/lib/dpkg/lock-frontend). Avez-vous les droits du superutilisateur ?
+henry.royer@info1-new:~$ sudo apt install lstopo
+-bash: sudo : commande introuvable
+```
+
 Ecrire un rapport sans ces informations cle est inutile, j'ai donc emprunte l'ordinateur d'un ami. L'utilisateur "Paul-Edouard" qui a ete ajoute en tant que contribuant dans le git est donc moi-meme sur son ordinateur.
 
 La topologie de sa machine est comme suit:
