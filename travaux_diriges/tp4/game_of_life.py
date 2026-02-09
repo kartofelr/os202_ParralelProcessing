@@ -44,7 +44,7 @@ class Grille:
     Exemple :
        grid = Grille( (10,10), init_pattern=[(2,2),(0,2),(4,2),(2,0),(2,4)], color_life=pg.Color("red"), color_dead=pg.Color("black"))
     """
-    def __init__(self, rank : int, nbp : int, dim, init_pattern=None, color_life=pg.Color("black"), color_dead=pg.Color("white")):
+    def __init__(self, rank : int, nbp : int, dim, init_pattern=None, color_life=pg.Color("white"), color_dead=pg.Color("black")):
         import random
         self.dimensions = dim
         self.dimensions_loc = (dim[0]//nbp + (1 if rank < dim[0]%nbp else 0),dim[1])

@@ -66,7 +66,6 @@ if __name__ == "__main__":
         flat_send_data = np.concatenate(data_to_send).astype(np.float64)
         receive_buffer = np.empty(sum(recv_counts), dtype=np.float64)
 
-        # The Heavy Lifting: Alltoallv uses direct memory buffers
         comm.Alltoallv(
             [flat_send_data, send_counts, send_displ, MPI.DOUBLE],
             [receive_buffer, recv_counts, recv_displ, MPI.DOUBLE]

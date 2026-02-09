@@ -55,11 +55,11 @@ Pour obtenir les resultats, un court programme bash a ete redige, afin de faire 
 
 _voir question 2 sur les manieres d'obtenir des resultats de speedup_
 
-Pour simuler l'existence de cores supplementaires, j'ai utilise l'option `--oversubscribe` de `mpiexec`, c'est pourquoi le graphique s'etend jusqu'a 32 cores, alors que j'en ai seulement 16.
+Pour simuler l'existence de cores supplementaires, j'ai utilise l'option `--oversubscribe` de `mpiexec`. Ceci a ete utile pour tester certaines fonctionalites sur ma machine avant d'emprunter un ordinateur plus puissant.
 
 ### Visualisation
 
-Pour visualiser les resultats, le programme `scaling_graphs.py` a ete utilise. **Je ne l'ai pas redige moi-meme**. La barre horizontale en tirets est la vitesse de np.sort()
+Pour visualiser les resultats, le programme `scaling_graphs.py` a ete utilise. **Je ne l'ai pas redige moi-meme** car ce n'est pas la visee du tp en question. La barre horizontale en tirets est la vitesse de np.sort()
 
 ![resultat en speedup](./speedup.png)
 
@@ -71,13 +71,11 @@ Le speedup obtenu est une courbe tres interressante a analyser. En effet, sur le
 
 Grace a `affinity = os.sched_getaffinity(0)` on peut associer `rank` dans `MPI` avec les numeros des cpu de `lstopo`. ceci revele que `MPI` demande pour $n$ processeurs d'utiliser les $n$ premiers, et non pas un subset de ceux qui sont libres, ou autre.
 
-Or les 6 premiers sont proche donc il est sensiblement gratuit de comuniquer entre eux. lorsqu'on ajoute le 7eme proc, il faut attendre ses envois de messages, il est donc nuisible au groupe : il aurait ete plus rapide de se passer de sa puissance de calul marginale supplementaire car on y perd plus a l'attendre que le travail qu'il fournit.
-
-Ceci n'est plus vrai a partir du 11eme PU: on retrouve le meme speedup que 6 cores. C'est le point d'inflexion a partir duquel les ressources supplementaires compensent l'attente des directives de communication. Jusqu'au 14e, ce c'est plus que du gain.
+Or les 6 premiers sont proche donc il est sensiblement gratuit de comuniquer entre eux. lorsqu'on ajoute le 7eme proc, il faut attendre ses envois de messages, il est donc nuisible au groupe : il aurait ete plus rapide de se passer de sa puissance de calul marginale supplementaire car on y perd plus a l'attendre que le travail qu'il fournit. Par pure coincidence, le prochain max local a 14PU est tres proche en speedup que 6PU.
 
 Comme indique dans la _question 1_, j'ai beaucoup de mal a interpreter ce qui se passe pour les 15e et 16e PU, je ne comprends pas quelle est leur relation aux autres.
 
-Au dela de 17, on tombe dans le domaine de `oversubscribe` qui simule l'existence d'autres PU, en fait, ce n'est plus utile d'ajouter des cores s'ils n'existent pas physiquement, meme si les $6$ premiers cores sont hyperthreade. La variance devient tres haute, et ce domaine n'est pas ou l'on trouvera la performance.
+Au dela de 17, on tombe dans le domaine de `oversubscribe` qui simule l'existence d'autres PU, en fait, ce n'est plus utile d'ajouter des cores s'ils n'existent pas physiquement, meme si les $6$ premiers cores sont hyperthreade. La variance devient tres haute, et ce domaine n'est pas ou l'on trouvera la performance. (ancien graphique non present ici).
 
 #### ..Par rapport a un core
 
