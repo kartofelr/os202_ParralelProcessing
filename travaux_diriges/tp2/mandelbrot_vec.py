@@ -5,9 +5,6 @@ from PIL import Image
 from math import log
 from time import time
 import matplotlib.cm
-from scipy import linalg as slinalg
-
-from mpi4py import MPI
 
 
 class MandelbrotSet:
@@ -27,12 +24,12 @@ class MandelbrotSet:
         z:    np.ndarray
         iter: np.ndarray
 
-        # On vérifie dans un premier temps si le complexe
-        # n'appartient pas à une zone de convergence connue :
+
         #   1. Appartenance aux disques  C0{(0,0),1/4} et C1{(-1,0),1/4}
         iter = self.max_iterations * np.ones(c.shape, dtype=np.double)
         mask = (np.abs(c) >= 0.25) | (np.abs(c+1.) >= 0.25)
-        # Sinon on itère
+        #  2.  Appartenance à la cardioïde {(1/4,0),1/2(1-cos(theta))}
+
         z = np.zeros(c.shape, dtype=np.complex128)
         for it in range(self.max_iterations):
             z[mask] = z[mask]*z[mask] + c[mask]
