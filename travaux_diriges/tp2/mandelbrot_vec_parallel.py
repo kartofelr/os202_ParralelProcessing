@@ -49,25 +49,47 @@ class MandelbrotSet:
 # On peut changer les paramètres des deux prochaines lignes
 mandelbrot_set = MandelbrotSet(max_iterations=200, escape_radius=2.0)
 
+globCom = MPI.COMM_WORLD.Dup()
+nbp = globCom.size
+rank = globCom.rank
+
 width, height = 2048, 2048
+parcel_size = height // nbp
+height = parcel_size * nbp
 
 scaleX = 3.0 / width
-scaleY = 2.25 / height
-convergence = np.empty((width, height), dtype=np.double)
+scaleY = 3.0 / height
 
-deb = time()
-for y in range(height):
-    c = np.array(
-        [complex(-2.0 + scaleX * x, -1.125 + scaleY * y) for x in range(width)]
-    )
-    convergence[:, y] = mandelbrot_set.convergence(c, smooth=True)
-fin = time()
-# print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
-print(f"baseline : {fin-deb}")
+convergence = np.empty((parcel_size,width), dtype=np.double)
 
-# Constitution de l'image résultante :
-# deb = time()
-# image = Image.fromarray(np.uint8(matplotlib.cm.afmhot(convergence.T) * 255))
-# fin = time()
-# print(f"Temps de constitution de l'image : {fin-deb}")
-# image.save("mandel.png")
+begin_x = -2.0
+begin_y = -1.5 + scaleY * (rank * parcel_size)
+
+x = begin_x + scaleX * np.arange(width)
+y = begin_y + scaleY * np.arange(parcel_size)
+
+X, Y = np.meshgrid(x, y)
+C = X + 1j * Y
+
+globCom.Barrier()
+deb = MPI.Wtime()
+convergence = mandelbrot_set.convergence(C, smooth=True)
+
+globCom.Barrier()
+fin = MPI.Wtime()
+# print(f"Vectorized calculation for processor rank {rank} took: {fin - deb:.4f}s")
+if rank == 0: print (f"{nbp},{fin-deb : .2f}")
+
+full_convergence = None
+if rank == 0:
+    full_convergence = np.empty((height, width), dtype=np.double)
+
+globCom.Gather(convergence, full_convergence, root=0)
+
+if rank == 0:
+    # print(f"Total image gathered. Shape: {full_convergence.shape}")
+    deb = time()
+    image = Image.fromarray(np.uint8(matplotlib.cm.afmhot(full_convergence) * 255))
+    fin = time()
+    # print(f"Temps de constitution de l'image : {fin-deb}")
+    # image.save("mandel.png")
