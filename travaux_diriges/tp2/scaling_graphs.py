@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import sys
 
-baseline = 6.12  # Your measured baseline time
-
+baseline_time = float(sys.argv[1])
 
 # Load your data
 df = pd.read_csv('results.csv')
@@ -17,7 +17,7 @@ plt.figure(figsize=(12, 5))
 plt.subplot(1, 2, 1)
 plt.plot(df['cores'], df['time'], marker='o', color='red')
 plt.title('Execution Time vs. Cores')
-plt.axhline(y=baseline, color='r', linestyle='--', label='mandelbrot_vec')
+plt.axhline(y=baseline_time, color='r', linestyle='--', label='mandelbrot_vec')
 plt.xlabel('Number of Cores')
 plt.ylabel('Time (s)')
 plt.grid(True)

@@ -56,14 +56,19 @@ scaleY = 2.25 / height
 convergence = np.empty((width, height), dtype=np.double)
 
 deb = time()
-for y in range(height):
-    c = np.array(
-        [complex(-2.0 + scaleX * x, -1.125 + scaleY * y) for x in range(width)]
-    )
-    convergence[:, y] = mandelbrot_set.convergence(c, smooth=True)
+begin_x = -2.0
+begin_y = -1.5
+
+x = begin_x + scaleX * np.arange(width)
+y = begin_y + scaleY * np.arange(height)
+
+X, Y = np.meshgrid(x, y)
+C = X + 1j * Y
+
+convergence = mandelbrot_set.convergence(C, smooth=True)
 fin = time()
-# print(f"Temps du calcul de l'ensemble de Mandelbrot : {fin-deb}")
-print(f"baseline : {fin-deb}")
+
+print(f"{fin-deb}")
 
 # Constitution de l'image résultante :
 # deb = time()
